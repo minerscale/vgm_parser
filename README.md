@@ -1,3 +1,6 @@
+# Used mostly unchanged from https://github.com/Wally869/vgm_parser.git
+# It's not licenced so I hope Wally forgives me for my sin.
+
 # VGM Parser  
 
 Parse VGM data using Rust.  

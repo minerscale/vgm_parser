@@ -1,25 +1,21 @@
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use serde::{Deserialize, Serialize};
 
-use crate::{
-    traits::{VgmParser, VgmWriter},
-    utils::{bcd_from_bytes, decimal_to_bcd},
-};
+use crate::bcd::{bcd_from_bytes, decimal_to_bcd};
 
-#[derive(Default, Serialize, Deserialize, Debug)]
+#[derive(Default, Debug)]
 pub struct ChipClockEntry {
     pub chip_id: u8,
     pub clock: u32,
 }
 
-#[derive(Default, Serialize, Deserialize, Debug)]
+#[derive(Default, Debug)]
 pub struct ChipVolumeEntry {
     pub chip_id: u8,
     pub flags: u8,
     pub volume: u16,
 }
 
-#[derive(Default, Serialize, Deserialize, Debug)]
+#[derive(Default, Debug)]
 pub struct ExtraHeaderData {
     pub header_size: u32,
     pub chip_clock_offset: u32,
@@ -28,103 +24,103 @@ pub struct ExtraHeaderData {
     pub chip_volume_entries: Vec<ChipVolumeEntry>,
 }
 
-#[derive(Default, Serialize, Deserialize, Debug)]
+#[derive(Default, Debug)]
 pub struct HeaderData {
     pub end_of_file_offset: u32,
     pub version: u32,
-    pub SN76489_clock: u32, // also called Sega PSG?
+    pub sn76489_clock: u32, // also called Sega PSG?
 
     // 0x10
-    pub YM2413_clock: u32,
-    pub GD3_offset: u32,
+    pub ym2413_clock: u32,
+    pub gd3_offset: u32,
     pub total_nb_samples: u32,
     pub loop_offset: u32,
 
     // 0x20
     pub loop_nb_samples: u32,
     pub rate: u32,
-    pub SN76489_feedback: u16,
-    pub SN76489_shift_register_width: u8,
-    pub SN76489_flags: u8,
-    pub YM2612_clock: u32,
+    pub sn76489_feedback: u16,
+    pub sn76489_shift_register_width: u8,
+    pub sn76489_flags: u8,
+    pub ym2612_clock: u32,
 
     // 0x30
-    pub YM2151_clock: u32,
+    pub ym2151_clock: u32,
     pub vgm_data_offset: u32,
-    pub SegaPCM_clock: u32,
-    pub SPCM_interface: u32,
+    pub sega_pcm_clock: u32,
+    pub spcm_interface: u32,
 
     // 0x40
-    pub RF5C68_clock: u32,
-    pub YM2203_clock: u32,
-    pub YM2608_clock: u32,
-    pub YM2610B_clock: u32,
+    pub rf5c68_clock: u32,
+    pub ym2203_clock: u32,
+    pub ym2608_clock: u32,
+    pub ym2610b_clock: u32,
 
     // 0x50
-    pub YM3812_clock: u32,
-    pub YM3526_clock: u32,
-    pub Y8950_clock: u32,
-    pub YMF262_clock: u32,
+    pub ym3812_clock: u32,
+    pub ym3526_clock: u32,
+    pub y8950_clock: u32,
+    pub ymf262_clock: u32,
 
     // 0x60
-    pub YMF278B_clock: u32,
-    pub YMF271_clock: u32,
-    pub YMZ280B_clock: u32,
-    pub RF5C164_clock: u32,
+    pub ymf278b_clock: u32,
+    pub ymf271_clock: u32,
+    pub ymz280b_clock: u32,
+    pub rf5c164_clock: u32,
 
     // 0x70
-    pub PWM_clock: u32,
-    pub AY8910_clock: u32,
-    pub AY8910_chip_type: u8,
-    pub AY8910_flags: u8,
-    pub YM2203_AY8910_flags: u8,
-    pub YM2608_AY8910_flags: u8,
+    pub pwm_clock: u32,
+    pub ay8910_clock: u32,
+    pub ay8910_chip_type: u8,
+    pub ay8910_flags: u8,
+    pub ym2203_ay8910_flags: u8,
+    pub ym2608_ay8910_flags: u8,
     pub volume_modifier: u8,
     pub loop_base: u8,
     pub loop_modifier: u8,
 
     // 0x80
-    pub GB_DMG_clock: u32,
-    pub NES_APU_clock: u32,
-    pub MultiPCM_clock: u32,
-    pub uPD7759_clock: u32,
+    pub gb_dmg_clock: u32,
+    pub nes_apu_clock: u32,
+    pub multi_pcm_clock: u32,
+    pub upd7759_clock: u32,
 
     // 0x90
-    pub OKIM6258_clock: u32,
-    pub OKIM6258_flags: u8,
-    pub K054539_flags: u8,
-    pub C140_chip_type: u8,
-    pub OKIM6295_clock: u32,
-    pub K051649_K052539_clock: u32,
+    pub okim6258_clock: u32,
+    pub okim6258_flags: u8,
+    pub k054539_flags: u8,
+    pub c140_chip_type: u8,
+    pub okim6295_clock: u32,
+    pub k051649_k052539_clock: u32,
 
     // 0xA0
-    pub K054539_clock: u32,
-    pub HuC6280_clock: u32,
-    pub C140_clock: u32,
-    pub K053260_clock: u32,
+    pub k054539_clock: u32,
+    pub huc6280_clock: u32,
+    pub c140_clock: u32,
+    pub k053260_clock: u32,
 
     // 0xB0
-    pub Pokey_clock: u32,
-    pub QSound_clock: u32,
-    pub SCSP_clock: u32,
+    pub pokey_clock: u32,
+    pub qsound_clock: u32,
+    pub scsp_clock: u32,
     pub extra_header_offset: u32,
 
     // 0xC0
-    pub WonderSwan_clock: u32,
-    pub VSU_clock: u32,
-    pub SAA1099_clock: u32,
-    pub ES5503_clock: u32,
+    pub wonderswan_clock: u32,
+    pub vsu_clock: u32,
+    pub saa1099_clock: u32,
+    pub es5503_clock: u32,
 
     // 0xD0
-    pub ES5506_clock: u32,
-    pub ES5503_nb_channels: u8,
-    pub ES5505_ES5506_nb_channels: u8,
-    pub C352_clock_divider: u8,
-    pub X1010_clock: u32,
-    pub C352_clock: u32,
+    pub es5506_clock: u32,
+    pub es5503_nb_channels: u8,
+    pub es5505_es5506_nb_channels: u8,
+    pub c352_clock_divider: u8,
+    pub x1010_clock: u32,
+    pub c352_clock: u32,
 
     // 0xE0
-    pub GA20_clock: u32,
+    pub ga20_clock: u32,
 
     // TODO: extra headers
     /// With VGM v1.70, there was an extra header added. This one has to be placed between the usual header and the actual VGM data.
@@ -136,11 +132,12 @@ impl HeaderData {
         // use this to track pos in the extra header?
         let remaining_bytes = data.remaining();
 
-        let mut extra_header = ExtraHeaderData::default();
-
-        extra_header.header_size = data.get_u32_le();
-        extra_header.chip_clock_offset = data.get_u32_le();
-        extra_header.chip_vol_offset = data.get_u32_le();
+        let mut extra_header = ExtraHeaderData {
+            header_size: data.get_u32_le(),
+            chip_clock_offset: data.get_u32_le(),
+            chip_vol_offset: data.get_u32_le(),
+            ..Default::default()
+        };
 
         // should be options, no guarantee that both are set
         let chip_clock_pos = if extra_header.chip_clock_offset == 0 {
@@ -164,7 +161,7 @@ impl HeaderData {
             if let Some(chip_clock_pos) = chip_clock_pos {
                 if chip_clock_pos == curr_pos {
                     let nb_entries = data.get_u8();
-                    for i in 0..nb_entries {
+                    for _ in 0..nb_entries {
                         let curr_entry = ChipClockEntry {
                             chip_id: data.get_u8(),
                             clock: data.get_u32_le(),
@@ -178,7 +175,7 @@ impl HeaderData {
             if let Some(chip_vol_pos) = chip_vol_pos {
                 if chip_vol_pos == curr_pos {
                     let nb_entries = data.get_u8();
-                    for i in 0..nb_entries {
+                    for _ in 0..nb_entries {
                         let curr_entry = ChipVolumeEntry {
                             chip_id: data.get_u8(),
                             flags: data.get_u8(),
@@ -271,12 +268,10 @@ impl HeaderData {
             buffer.put(&[0x00][..]);
         }
     }
-}
 
-impl VgmParser for HeaderData {
     /// Read header data
     /// From 1.5 onwards, any length of header is valid as long as it is at least 64 bytes long
-    fn from_bytes(data: &mut Bytes) -> Self {
+    pub fn from_bytes(data: &mut Bytes) -> Self {
         let mut header = HeaderData::default();
         // get length of data for position calculation
         let len_data = data.len();
@@ -287,27 +282,27 @@ impl VgmParser for HeaderData {
         header.end_of_file_offset = data.get_u32_le();
 
         header.version = bcd_from_bytes(&data.get_u32().to_be_bytes()[..]); //(&data.get_u32().to_be_bytes()[..]);
-        header.SN76489_clock = data.get_u32_le();
+        header.sn76489_clock = data.get_u32_le();
 
         // 0x10
-        header.YM2413_clock = data.get_u32_le();
-        header.GD3_offset = data.get_u32_le();
+        header.ym2413_clock = data.get_u32_le();
+        header.gd3_offset = data.get_u32_le();
         header.total_nb_samples = data.get_u32_le();
         header.loop_offset = data.get_u32_le();
 
         // 0x20
         header.loop_nb_samples = data.get_u32_le();
         header.rate = data.get_u32_le();
-        header.SN76489_feedback = data.get_u16_le();
-        header.SN76489_shift_register_width = data.get_u8();
-        header.SN76489_flags = data.get_u8();
-        header.YM2612_clock = data.get_u32_le();
+        header.sn76489_feedback = data.get_u16_le();
+        header.sn76489_shift_register_width = data.get_u8();
+        header.sn76489_flags = data.get_u8();
+        header.ym2612_clock = data.get_u32_le();
 
         // 0x30
-        header.YM2151_clock = data.get_u32_le();
+        header.ym2151_clock = data.get_u32_le();
         header.vgm_data_offset = data.get_u32_le();
-        header.SegaPCM_clock = data.get_u32_le();
-        header.SPCM_interface = data.get_u32_le();
+        header.sega_pcm_clock = data.get_u32_le();
+        header.spcm_interface = data.get_u32_le();
 
         let pos_start_vgm = header.vgm_data_offset + 0x34;
 
@@ -316,81 +311,81 @@ impl VgmParser for HeaderData {
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.RF5C68_clock = data.get_u32_le();
+        header.rf5c68_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.YM2203_clock = data.get_u32_le();
+        header.ym2203_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.YM2608_clock = data.get_u32_le();
+        header.ym2608_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.YM2610B_clock = data.get_u32_le();
+        header.ym2610b_clock = data.get_u32_le();
 
         // 0x50
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.YM3812_clock = data.get_u32_le();
+        header.ym3812_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.YM3526_clock = data.get_u32_le();
+        header.ym3526_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.Y8950_clock = data.get_u32_le();
+        header.y8950_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.YMF262_clock = data.get_u32_le();
+        header.ymf262_clock = data.get_u32_le();
 
         // 0x60
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.YMF278B_clock = data.get_u32_le();
+        header.ymf278b_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.YMF271_clock = data.get_u32_le();
+        header.ymf271_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.YMZ280B_clock = data.get_u32_le();
+        header.ymz280b_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.RF5C164_clock = data.get_u32_le();
+        header.rf5c164_clock = data.get_u32_le();
 
         // 0x70
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.PWM_clock = data.get_u32_le();
+        header.pwm_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.AY8910_clock = data.get_u32_le();
+        header.ay8910_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.AY8910_chip_type = data.get_u8();
+        header.ay8910_chip_type = data.get_u8();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.AY8910_flags = data.get_u8();
+        header.ay8910_flags = data.get_u8();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.YM2203_AY8910_flags = data.get_u8();
+        header.ym2203_ay8910_flags = data.get_u8();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.YM2608_AY8910_flags = data.get_u8();
+        header.ym2608_ay8910_flags = data.get_u8();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
@@ -415,37 +410,37 @@ impl VgmParser for HeaderData {
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.GB_DMG_clock = data.get_u32_le();
+        header.gb_dmg_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.NES_APU_clock = data.get_u32_le();
+        header.nes_apu_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.MultiPCM_clock = data.get_u32_le();
+        header.multi_pcm_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.uPD7759_clock = data.get_u32_le();
+        header.upd7759_clock = data.get_u32_le();
 
         // 0x90
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.OKIM6258_clock = data.get_u32_le();
+        header.okim6258_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.OKIM6258_flags = data.get_u8();
+        header.okim6258_flags = data.get_u8();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.K054539_flags = data.get_u8();
+        header.k054539_flags = data.get_u8();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.C140_chip_type = data.get_u8();
+        header.c140_chip_type = data.get_u8();
 
         // skip reserved
         if (len_data - data.remaining()) == pos_start_vgm as usize {
@@ -456,43 +451,43 @@ impl VgmParser for HeaderData {
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.OKIM6295_clock = data.get_u32_le();
+        header.okim6295_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.K051649_K052539_clock = data.get_u32_le();
+        header.k051649_k052539_clock = data.get_u32_le();
 
         // 0xA0
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.K054539_clock = data.get_u32_le();
+        header.k054539_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.HuC6280_clock = data.get_u32_le();
+        header.huc6280_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.C140_clock = data.get_u32_le();
+        header.c140_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.K053260_clock = data.get_u32_le();
+        header.k053260_clock = data.get_u32_le();
 
         // 0xB0
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.Pokey_clock = data.get_u32_le();
+        header.pokey_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.QSound_clock = data.get_u32_le();
+        header.qsound_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
-        header.SCSP_clock = data.get_u32_le();
+        header.scsp_clock = data.get_u32_le();
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
         }
@@ -515,7 +510,7 @@ impl VgmParser for HeaderData {
                 return header;
             }
         }
-        header.WonderSwan_clock = data.get_u32_le();
+        header.wonderswan_clock = data.get_u32_le();
 
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
@@ -525,7 +520,7 @@ impl VgmParser for HeaderData {
                 return header;
             }
         }
-        header.VSU_clock = data.get_u32_le();
+        header.vsu_clock = data.get_u32_le();
 
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
@@ -535,7 +530,7 @@ impl VgmParser for HeaderData {
                 return header;
             }
         }
-        header.SAA1099_clock = data.get_u32_le();
+        header.saa1099_clock = data.get_u32_le();
 
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
@@ -545,7 +540,7 @@ impl VgmParser for HeaderData {
                 return header;
             }
         }
-        header.ES5503_clock = data.get_u32_le();
+        header.es5503_clock = data.get_u32_le();
 
         // 0xD0
         if (len_data - data.remaining()) == pos_start_vgm as usize {
@@ -556,7 +551,7 @@ impl VgmParser for HeaderData {
                 return header;
             }
         }
-        header.ES5506_clock = data.get_u32_le();
+        header.es5506_clock = data.get_u32_le();
 
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
@@ -566,7 +561,7 @@ impl VgmParser for HeaderData {
                 return header;
             }
         }
-        header.ES5503_nb_channels = data.get_u8();
+        header.es5503_nb_channels = data.get_u8();
 
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
@@ -576,7 +571,7 @@ impl VgmParser for HeaderData {
                 return header;
             }
         }
-        header.ES5505_ES5506_nb_channels = data.get_u8();
+        header.es5505_es5506_nb_channels = data.get_u8();
 
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
@@ -586,7 +581,7 @@ impl VgmParser for HeaderData {
                 return header;
             }
         }
-        header.C352_clock_divider = data.get_u8();
+        header.c352_clock_divider = data.get_u8();
 
         // skip reserved
         if (len_data - data.remaining()) == pos_start_vgm as usize {
@@ -607,7 +602,7 @@ impl VgmParser for HeaderData {
                 return header;
             }
         }
-        header.X1010_clock = data.get_u32_le();
+        header.x1010_clock = data.get_u32_le();
 
         if (len_data - data.remaining()) == pos_start_vgm as usize {
             return header;
@@ -617,7 +612,7 @@ impl VgmParser for HeaderData {
                 return header;
             }
         }
-        header.C352_clock = data.get_u32_le();
+        header.c352_clock = data.get_u32_le();
 
         // 0xE0
         if (len_data - data.remaining()) == pos_start_vgm as usize {
@@ -628,14 +623,12 @@ impl VgmParser for HeaderData {
                 return header;
             }
         }
-        header.GA20_clock = data.get_u32_le();
+        header.ga20_clock = data.get_u32_le();
 
-        return header;
+        header
     }
-}
 
-impl VgmWriter for HeaderData {
-    fn to_bytes(&self, buffer: &mut BytesMut) {
+    pub fn to_bytes(&self, buffer: &mut BytesMut) {
         let vgm_data_pos = (self.vgm_data_offset + 0x34) as usize;
         let extra_header_pos = if self.extra_header_offset == 0 {
             None
@@ -647,122 +640,122 @@ impl VgmWriter for HeaderData {
         buffer.put(&self.end_of_file_offset.to_le_bytes()[..]);
         buffer.put(&decimal_to_bcd(self.version)[..]);
 
-        buffer.put(&self.SN76489_clock.to_le_bytes()[..]);
+        buffer.put(&self.sn76489_clock.to_le_bytes()[..]);
 
         // 0x10
-        buffer.put(&self.YM2413_clock.to_le_bytes()[..]);
-        buffer.put(&self.GD3_offset.to_le_bytes()[..]);
+        buffer.put(&self.ym2413_clock.to_le_bytes()[..]);
+        buffer.put(&self.gd3_offset.to_le_bytes()[..]);
         buffer.put(&self.total_nb_samples.to_le_bytes()[..]);
         buffer.put(&self.loop_offset.to_le_bytes()[..]);
 
         // 0x20
         buffer.put(&self.loop_nb_samples.to_le_bytes()[..]);
         buffer.put(&self.rate.to_le_bytes()[..]);
-        buffer.put(&self.SN76489_feedback.to_le_bytes()[..]);
-        buffer.put(&self.SN76489_shift_register_width.to_le_bytes()[..]);
-        buffer.put(&self.SN76489_flags.to_le_bytes()[..]);
-        buffer.put(&self.YM2612_clock.to_le_bytes()[..]);
+        buffer.put(&self.sn76489_feedback.to_le_bytes()[..]);
+        buffer.put(&self.sn76489_shift_register_width.to_le_bytes()[..]);
+        buffer.put(&self.sn76489_flags.to_le_bytes()[..]);
+        buffer.put(&self.ym2612_clock.to_le_bytes()[..]);
 
         // 0x30
-        buffer.put(&self.YM2151_clock.to_le_bytes()[..]);
+        buffer.put(&self.ym2151_clock.to_le_bytes()[..]);
         buffer.put(&self.vgm_data_offset.to_le_bytes()[..]);
-        buffer.put(&self.SegaPCM_clock.to_le_bytes()[..]);
-        buffer.put(&self.SPCM_interface.to_le_bytes()[..]);
+        buffer.put(&self.sega_pcm_clock.to_le_bytes()[..]);
+        buffer.put(&self.spcm_interface.to_le_bytes()[..]);
 
         // 0x40
         // From here, need to check if is still header, or start of vgm data
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.RF5C68_clock.to_le_bytes()[..]);
+        buffer.put(&self.rf5c68_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.YM2203_clock.to_le_bytes()[..]);
+        buffer.put(&self.ym2203_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.YM2608_clock.to_le_bytes()[..]);
+        buffer.put(&self.ym2608_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.YM2610B_clock.to_le_bytes()[..]);
+        buffer.put(&self.ym2610b_clock.to_le_bytes()[..]);
 
         // 0x50
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.YM3812_clock.to_le_bytes()[..]);
+        buffer.put(&self.ym3812_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.YM3526_clock.to_le_bytes()[..]);
+        buffer.put(&self.ym3526_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.Y8950_clock.to_le_bytes()[..]);
+        buffer.put(&self.y8950_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.YMF262_clock.to_le_bytes()[..]);
+        buffer.put(&self.ymf262_clock.to_le_bytes()[..]);
 
         // 0x60
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.YMF278B_clock.to_le_bytes()[..]);
+        buffer.put(&self.ymf278b_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.YMF271_clock.to_le_bytes()[..]);
+        buffer.put(&self.ymf271_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.YMZ280B_clock.to_le_bytes()[..]);
+        buffer.put(&self.ymz280b_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.RF5C164_clock.to_le_bytes()[..]);
+        buffer.put(&self.rf5c164_clock.to_le_bytes()[..]);
 
         // 0x70
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.PWM_clock.to_le_bytes()[..]);
+        buffer.put(&self.pwm_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.AY8910_clock.to_le_bytes()[..]);
+        buffer.put(&self.ay8910_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.AY8910_chip_type.to_le_bytes()[..]);
+        buffer.put(&self.ay8910_chip_type.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.AY8910_flags.to_le_bytes()[..]);
+        buffer.put(&self.ay8910_flags.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.YM2203_AY8910_flags.to_le_bytes()[..]);
+        buffer.put(&self.ym2203_ay8910_flags.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.YM2608_AY8910_flags.to_le_bytes()[..]);
+        buffer.put(&self.ym2608_ay8910_flags.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
@@ -788,43 +781,43 @@ impl VgmWriter for HeaderData {
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.GB_DMG_clock.to_le_bytes()[..]);
+        buffer.put(&self.gb_dmg_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.NES_APU_clock.to_le_bytes()[..]);
+        buffer.put(&self.nes_apu_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.MultiPCM_clock.to_le_bytes()[..]);
+        buffer.put(&self.multi_pcm_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.uPD7759_clock.to_le_bytes()[..]);
+        buffer.put(&self.upd7759_clock.to_le_bytes()[..]);
 
         // 0x90
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.OKIM6258_clock.to_le_bytes()[..]);
+        buffer.put(&self.okim6258_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.OKIM6258_flags.to_le_bytes()[..]);
+        buffer.put(&self.okim6258_flags.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.K054539_flags.to_le_bytes()[..]);
+        buffer.put(&self.k054539_flags.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.C140_chip_type.to_le_bytes()[..]);
+        buffer.put(&self.c140_chip_type.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
@@ -834,49 +827,49 @@ impl VgmWriter for HeaderData {
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.OKIM6295_clock.to_le_bytes()[..]);
+        buffer.put(&self.okim6295_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.K051649_K052539_clock.to_le_bytes()[..]);
+        buffer.put(&self.k051649_k052539_clock.to_le_bytes()[..]);
 
         // 0xA0
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.K054539_clock.to_le_bytes()[..]);
+        buffer.put(&self.k054539_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.HuC6280_clock.to_le_bytes()[..]);
+        buffer.put(&self.huc6280_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.C140_clock.to_le_bytes()[..]);
+        buffer.put(&self.c140_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.K053260_clock.to_le_bytes()[..]);
+        buffer.put(&self.k053260_clock.to_le_bytes()[..]);
 
         // 0xB0
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.Pokey_clock.to_le_bytes()[..]);
+        buffer.put(&self.pokey_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.QSound_clock.to_le_bytes()[..]);
+        buffer.put(&self.qsound_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
         }
-        buffer.put(&self.SCSP_clock.to_le_bytes()[..]);
+        buffer.put(&self.scsp_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
@@ -894,7 +887,7 @@ impl VgmWriter for HeaderData {
                 return;
             }
         }
-        buffer.put(&self.WonderSwan_clock.to_le_bytes()[..]);
+        buffer.put(&self.wonderswan_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
@@ -904,7 +897,7 @@ impl VgmWriter for HeaderData {
                 return;
             }
         }
-        buffer.put(&self.VSU_clock.to_le_bytes()[..]);
+        buffer.put(&self.vsu_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
@@ -914,7 +907,7 @@ impl VgmWriter for HeaderData {
                 return;
             }
         }
-        buffer.put(&self.SAA1099_clock.to_le_bytes()[..]);
+        buffer.put(&self.saa1099_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
@@ -924,7 +917,7 @@ impl VgmWriter for HeaderData {
                 return;
             }
         }
-        buffer.put(&self.ES5503_clock.to_le_bytes()[..]);
+        buffer.put(&self.es5503_clock.to_le_bytes()[..]);
 
         // 0xD0
         if buffer.len() == vgm_data_pos {
@@ -935,7 +928,7 @@ impl VgmWriter for HeaderData {
                 return;
             }
         }
-        buffer.put(&self.ES5506_clock.to_le_bytes()[..]);
+        buffer.put(&self.es5506_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
@@ -945,7 +938,7 @@ impl VgmWriter for HeaderData {
                 return;
             }
         }
-        buffer.put(&self.ES5503_nb_channels.to_le_bytes()[..]);
+        buffer.put(&self.es5503_nb_channels.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
@@ -955,7 +948,7 @@ impl VgmWriter for HeaderData {
                 return;
             }
         }
-        buffer.put(&self.ES5505_ES5506_nb_channels.to_le_bytes()[..]);
+        buffer.put(&self.es5505_es5506_nb_channels.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
@@ -965,7 +958,7 @@ impl VgmWriter for HeaderData {
                 return;
             }
         }
-        buffer.put(&self.C352_clock_divider.to_le_bytes()[..]);
+        buffer.put(&self.c352_clock_divider.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
@@ -985,7 +978,7 @@ impl VgmWriter for HeaderData {
                 return;
             }
         }
-        buffer.put(&self.X1010_clock.to_le_bytes()[..]);
+        buffer.put(&self.x1010_clock.to_le_bytes()[..]);
 
         if buffer.len() == vgm_data_pos {
             return;
@@ -995,7 +988,7 @@ impl VgmWriter for HeaderData {
                 return;
             }
         }
-        buffer.put(&self.C352_clock.to_le_bytes()[..]);
+        buffer.put(&self.c352_clock.to_le_bytes()[..]);
 
         // 0xE0
         if buffer.len() == vgm_data_pos {
@@ -1006,7 +999,7 @@ impl VgmWriter for HeaderData {
                 return;
             }
         }
-        buffer.put(&self.GA20_clock.to_le_bytes()[..]);
+        buffer.put(&self.ga20_clock.to_le_bytes()[..]);
     }
 }
 
@@ -1016,7 +1009,7 @@ mod tests {
 
     use bytes::{Buf, Bytes, BytesMut};
 
-    use crate::utils::PositionAccessor;
+    use crate::traits::{VgmParser, VgmWriter};
 
     use super::HeaderData;
 
@@ -1027,7 +1020,7 @@ mod tests {
         let mut mem = Bytes::from(data.clone());
 
         let header = HeaderData::from_bytes(&mut mem);
-        println!("clock: {}", header.YM2608_clock);
+        println!("clock: {}", header.ym2608_clock);
 
         let mut out_buffer = BytesMut::new();
         header.to_bytes(&mut out_buffer);

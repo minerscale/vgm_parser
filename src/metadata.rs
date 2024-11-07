@@ -1,18 +1,12 @@
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use serde::{Deserialize, Serialize};
 
-use crate::{
-    traits::{VgmParser, VgmWriter},
-    utils::write_string_as_u16_bytes,
-};
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum LanguageData {
     English(Gd3LocaleData),
     Japanese(Gd3LocaleData),
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Gd3LocaleData {
     //pub Language: Language,
     pub track: String,
@@ -21,7 +15,7 @@ pub struct Gd3LocaleData {
     pub author: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct VgmMetadata {
     pub english_data: Gd3LocaleData,
     pub japanese_data: Gd3LocaleData,
@@ -30,8 +24,8 @@ pub struct VgmMetadata {
     pub notes: String,
 }
 
-impl VgmParser for VgmMetadata {
-    fn from_bytes(data: &mut Bytes) -> Self {
+impl VgmMetadata {
+    pub fn from_bytes(data: &mut Bytes) -> Self {
         // validate version
         let version = data.slice(4..8); //.get_u32_le();
         let ver: &[u8] = &[0x0, 0x1, 0x0, 0x0];
@@ -40,14 +34,13 @@ impl VgmParser for VgmMetadata {
             panic!("Unsupported Gd3 Version");
         }
 
-        let data_length = data.slice(8..12).get_u32_le();
+        let _data_length = data.slice(8..12).get_u32_le();
 
         // convert bytes to Vec<u16>
         let data: Vec<u16> = data
             .slice(12..)
             .to_vec()
             .chunks_exact(2)
-            .into_iter()
             .map(|a| u16::from_le_bytes([a[0], a[1]]))
             .collect();
 
@@ -77,18 +70,16 @@ impl VgmParser for VgmMetadata {
             author: String::from_utf16(&acc[7]).unwrap(),
         };
 
-        return VgmMetadata {
+        VgmMetadata {
             english_data: eng_data,
             japanese_data: jap_data,
             date_release: String::from_utf16(&acc[8]).unwrap(),
             name_vgm_creator: String::from_utf16(&acc[9]).unwrap(),
             notes: String::from_utf16(&acc[10]).unwrap(),
-        };
+        }
     }
-}
 
-impl VgmWriter for VgmMetadata {
-    fn to_bytes(&self, buffer: &mut BytesMut) {
+    pub fn to_bytes(&self, buffer: &mut BytesMut) {
         // write magic and version
         buffer.put(&b"Gd3 "[..]);
         buffer.put(&[0x00, 0x01, 0x00, 0x00][..]);
@@ -138,4 +129,13 @@ impl VgmWriter for VgmMetadata {
         let loc = &mut buffer[index_length..(index_length + 4)];
         loc.copy_from_slice(&data_length.to_le_bytes()[..]);
     }
+}
+
+fn write_string_as_u16_bytes(buffer: &mut BytesMut, value: &str) {
+    buffer.put(
+        &value
+            .encode_utf16()
+            .flat_map(|x| x.to_le_bytes())
+            .collect::<Vec<u8>>()[..],
+    );
 }
